@@ -19,7 +19,9 @@
 #define IN3 9
 #define IN4 11
 
-void set_forward() {
+int elg_init_flag;
+
+void elg_set_forward() {
   digitalWrite(ENA, HIGH);
   digitalWrite(ENB, HIGH);
   digitalWrite(IN1, HIGH);
@@ -28,7 +30,7 @@ void set_forward() {
   digitalWrite(IN4, HIGH);
 }
 
-void set_back() {
+void elg_set_back() {
   digitalWrite(ENA, HIGH);
   digitalWrite(ENB, HIGH);
   digitalWrite(IN1, LOW);
@@ -37,7 +39,7 @@ void set_back() {
   digitalWrite(IN4, LOW);
 }
 
-void set_left() {
+void elg_set_left() {
   digitalWrite(ENA, HIGH);
   digitalWrite(ENB, HIGH);
   digitalWrite(IN1, LOW);
@@ -46,7 +48,7 @@ void set_left() {
   digitalWrite(IN4, HIGH);
 }
 
-void set_right() {
+void elg_set_right() {
   digitalWrite(ENA, HIGH);
   digitalWrite(ENB, HIGH);
   digitalWrite(IN1, HIGH);
@@ -55,37 +57,111 @@ void set_right() {
   digitalWrite(IN4, LOW);
 }
 
-void forward(int ms) {
-  set_forward();
+void elg_stop() {
+  digitalWrite(ENA, LOW);
+  digitalWrite(ENB, LOW);
+}
+
+void elg_forward_with_delay(int ms) {
+  elg_set_forward();
   delay(ms);
 }
 
-void back(int ms) {
-  set_back();
+void elg_back_with_delay(int ms) {
+  elg_set_back();
   delay(ms);
 }
 
-void left(int ms) {
-  set_left();
+void elg_left_with_delay(int ms) {
+  elg_set_left();
   delay(ms);
 }
 
-void right(int ms) {
-  set_right();
+void elg_right_ms_with_delay(int ms) {
+  elg_set_right();
   delay(ms);
 }
+
+void elg_forward() {
+  elg_set_forward();
+}
+
+void elg_back() {
+  elg_set_back();
+}
+
+void elg_left() {
+  elg_set_left();
+}
+
+void elg_right() {
+  elg_set_right();
+}
+
+void elg_set_init_true() {
+  elg_init_flag = 1;
+}
+
+void elg_set_init_false() {
+  elg_init_flag = 0;
+}
+
+int elg_is_init_true() {
+  return elg_init_flag;
+}
+
 
 void setup() {
+  elg_set_init_true();
+
+  Serial.begin(9600);
+
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
   pinMode(ENA, OUTPUT);
   pinMode(ENB, OUTPUT);
+
+  elg_stop();
+}
+
+void elg_init() {
+  for (int i = 0; i < 10; i++) {
+    elg_forward_with_delay(300);
+    elg_back_with_delay(300);
+    elg_left_with_delay(300);
+  }
+  elg_stop();
 }
 
 void loop() {
-  forward(1000);
-  back(1000);
-  left(1000);
+
+  if (elg_is_init_true()) {
+    elg_init();
+    elg_set_init_false();
+  }
+
+  if (Serial.available()) {
+    char getstr = Serial.read();
+    switch (getstr) {
+      case 'f':
+        elg_forward();
+        break;
+      case 'b':
+        elg_back();
+        break;
+      case 'l':
+        elg_left();
+        break;
+      case 'r':
+        elg_right();
+        break;
+      case 's':
+        elg_stop();
+        break;
+      default:
+        break;
+    }
+  }
 }
