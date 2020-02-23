@@ -1,4 +1,4 @@
-
+#include <IRremote.h>
 
 //    The direction of the car's movement
 //  ENA   ENB   IN1   IN2   IN3   IN4   Description
@@ -19,7 +19,21 @@
 #define IN3 9
 #define IN4 11
 
+
+// IR Codes
+#define IR_F 16736925  // Forward
+#define IR_B 16754775  // Back
+#define IR_L 16720605  // Left
+#define IR_R 16761405  // Right
+#define IR_S 16712445  // Stop
+
+
+#define IR_RECV_PIN  12
+
 int elg_init_flag;
+
+IRrecv irrecv(IR_RECV_PIN);
+decode_results results;
 
 void elg_set_forward() {
   digitalWrite(ENA, HIGH);
@@ -143,8 +157,8 @@ void loop() {
   }
 
   if (Serial.available()) {
-    char getstr = Serial.read();
-    switch (getstr) {
+    char val = Serial.read();
+    switch (val) {
       case 'f':
         elg_forward();
         break;
@@ -164,4 +178,29 @@ void loop() {
         break;
     }
   }
+
+  if (irrecv.decode(&results)) {
+    unsigned long val = results.value;
+    irrecv.resume();
+    switch (val) {
+      case IR_F:
+        elg_forward();
+        break;
+      case IR_B:
+        elg_back();
+        break;
+      case IR_L:
+        elg_left();
+        break;
+      case IR_R:
+        elg_right();
+        break;
+      case IR_S:
+        elg_stop();
+        break;
+      default: 
+        break;
+    }
+  }
+
 }
