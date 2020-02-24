@@ -112,7 +112,7 @@ void elg_right() {
   elg_set_right();
 }
 
-void elg_set_init_true() {
+void elg_set_init_setup() {
   elg_init_flag = 1;
 }
 
@@ -124,19 +124,28 @@ int elg_is_init_true() {
   return elg_init_flag;
 }
 
-
-void setup() {
-  elg_set_init_true();
-
-  Serial.begin(9600);
-
+void elg_servo_setup() {
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
   pinMode(ENA, OUTPUT);
-  pinMode(ENB, OUTPUT);
+  pinMode(ENB, OUTPUT);  
+}
 
+void elg_ble_setup() {
+  Serial.begin(9600);  
+}
+
+void elg_ir_setup() {
+    irrecv.enableIRIn(); 
+}
+
+void setup() {
+  elg_set_init_setup();
+  elg_servo_setup();
+  elg_ble_setup();
+  elg_ir_setup();
   elg_stop();
 }
 
@@ -149,6 +158,11 @@ void elg_init() {
   elg_stop();
 }
 
+char* elg_read_ble() {
+  
+  return NULL;
+}
+
 void loop() {
 
   if (elg_is_init_true()) {
@@ -156,7 +170,7 @@ void loop() {
     elg_set_init_false();
   }
 
-  if (Serial.available()) {
+  if (Serial.available() > 0) {
     char val = Serial.read();
     switch (val) {
       case 'f':
