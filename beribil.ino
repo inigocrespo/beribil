@@ -1,4 +1,5 @@
 #include <IRremote.h>
+#include <Servo.h>
 
 //    The direction of the car's movement
 //  ENA   ENB   IN1   IN2   IN3   IN4   Description
@@ -28,12 +29,24 @@
 #define IR_S 16712445  // Stop
 
 
-#define IR_RECV_PIN  12
+#define IR_RECV_PIN 12
+
+#define HEAD_PIN 3
+
+#define HEAD_MIN_DEGREE_PULSE 700
+#define HEAD_MAX_DEGREE_PULSE 2400
+
+#define HEAD_STRAIGHT 90
+#define HEAD_RIGTH_MAX 0
+#define HEAD_LEFT_MAX 180
+#define HEAD_STEP 20
 
 int elg_init_flag;
 
 IRrecv irrecv(IR_RECV_PIN);
 decode_results results;
+
+Servo elg_head;
 
 void elg_set_forward() {
   digitalWrite(ENA, HIGH);
@@ -112,6 +125,53 @@ void elg_right() {
   elg_set_right();
 }
 
+void elg_set_head_straight() {
+  elg_head.write(HEAD_STRAIGHT);
+}
+
+void elg_head_straight_with_delay(int ms) {
+  elg_set_head_straight();
+  delay(ms);
+}
+
+boolean elg_head_right() {
+  int current = elg_head.read();
+  int next = current - HEAD_STEP;
+
+  boolean res = true;
+  if (next <= HEAD_RIGTH_MAX) {
+    next = HEAD_RIGTH_MAX;
+    res = false;
+  }
+  elg_head.write(next);
+  return res;
+}
+
+boolean elg_head_left() {
+  int current = elg_head.read();
+  int next = current + HEAD_STEP;
+
+  boolean res = true;
+  if (next >= HEAD_LEFT_MAX) {
+    next = HEAD_LEFT_MAX;
+    res = false;
+  }
+  elg_head.write(next);
+  return res;
+}
+
+boolean elg_head_right_with_delay(int ms) {
+  boolean res = elg_head_right();
+  delay(ms);
+  return res;
+}
+
+boolean elg_head_left_with_delay(int ms) {
+  boolean res = elg_head_left();
+  delay(ms);
+  return res;
+}
+
 void elg_set_init_setup() {
   elg_init_flag = 1;
 }
@@ -130,15 +190,20 @@ void elg_servo_setup() {
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
   pinMode(ENA, OUTPUT);
-  pinMode(ENB, OUTPUT);  
+  pinMode(ENB, OUTPUT);
 }
 
 void elg_ble_setup() {
-  Serial.begin(9600);  
+  Serial.begin(9600);
 }
 
 void elg_ir_setup() {
-    irrecv.enableIRIn(); 
+  irrecv.enableIRIn();
+}
+
+void elg_head_setup() {
+  elg_head.attach(HEAD_PIN, HEAD_MIN_DEGREE_PULSE, HEAD_MAX_DEGREE_PULSE);
+  elg_set_head_straight();
 }
 
 void setup() {
@@ -146,11 +211,17 @@ void setup() {
   elg_servo_setup();
   elg_ble_setup();
   elg_ir_setup();
+  elg_head_setup();
   elg_stop();
 }
 
 void elg_init() {
-  for (int i = 0; i < 10; i++) {
+  while (elg_head_right_with_delay(1000));
+  elg_head_straight_with_delay(1000);
+  while (elg_head_left_with_delay(1000));
+  elg_head_straight_with_delay(1000);
+
+  for (int i = 0; i < 5; i++) {
     elg_forward_with_delay(300);
     elg_back_with_delay(300);
     elg_left_with_delay(300);
@@ -159,7 +230,7 @@ void elg_init() {
 }
 
 char* elg_read_ble() {
-  
+
   return NULL;
 }
 
@@ -212,7 +283,7 @@ void loop() {
       case IR_S:
         elg_stop();
         break;
-      default: 
+      default:
         break;
     }
   }
